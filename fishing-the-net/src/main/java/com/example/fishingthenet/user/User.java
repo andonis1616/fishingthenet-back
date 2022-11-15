@@ -1,8 +1,11 @@
 package com.example.fishingthenet.user;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Set;
 
 @Data
@@ -11,6 +14,8 @@ import java.util.Set;
         @UniqueConstraint(columnNames = {"username"}),
         @UniqueConstraint(columnNames = {"email"})
 })
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
 
     @Id
