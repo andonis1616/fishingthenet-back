@@ -1,5 +1,6 @@
 package com.example.fishingthenet.user;
 
+import com.nimbusds.oauth2.sdk.util.singleuse.AlreadyUsedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,7 +25,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public User saveUser(User user) {
+    public User saveUser(User user) throws AlreadyUsedException {
+        if (userRepo.existsByUsername(user.getUsername())){
+            throw new AlreadyUsedException("Username taken");
+        }
+        if (userRepo.existsByEmail(user.getEmail())){
+            throw new AlreadyUsedException("Email taken");
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepo.save(user);
     }

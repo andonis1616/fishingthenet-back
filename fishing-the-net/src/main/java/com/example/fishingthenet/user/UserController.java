@@ -1,5 +1,6 @@
 package com.example.fishingthenet.user;
 
+import com.nimbusds.oauth2.sdk.util.singleuse.AlreadyUsedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,8 +46,8 @@ public class UserController {
         return new ResponseEntity<>("User signed-in successfully!.", HttpStatus.OK);
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody SignUpDto signUpDto){
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@RequestBody SignUpDto signUpDto) throws AlreadyUsedException {
 
         // create user object
         User user = new User();
@@ -55,10 +56,18 @@ public class UserController {
         user.setEmail(signUpDto.getEmail());
         user.setPassword(passwordEncoder.encode(signUpDto.getPassword()));
 
-        Role roles = roleRepository.findByName("ROLE_ADMIN").get();
+        Role roles = roleRepository.findByName("ROLE_USER").get();
         user.setRoles(Collections.singleton(roles));
-        userService.saveUser(user);
-        return new ResponseEntity<>("User registered successfully", HttpStatus.OK);
+        User return_user = userService.saveUser(user);
+
+        UserDto dto = new UserDto();
+        dto.setName(return_user.getName());
+        dto.setEmail(return_user.getEmail());
+        dto.setId(return_user.getId());
+        dto.setUsername(return_user.getUsername());
+        dto.setRoles(return_user.getRoles());
+
+        return ResponseEntity.ok(dto);
 
     }
 
