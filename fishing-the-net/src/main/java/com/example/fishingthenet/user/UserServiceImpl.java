@@ -3,6 +3,7 @@ package com.example.fishingthenet.user;
 import com.nimbusds.oauth2.sdk.util.singleuse.AlreadyUsedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,6 +23,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepo;
     private final RoleRepository roleRepo;
 
+    @Autowired
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -33,7 +35,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             throw new AlreadyUsedException("Email taken");
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+     //   user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepo.save(user);
     }
 

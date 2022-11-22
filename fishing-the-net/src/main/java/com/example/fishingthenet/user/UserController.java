@@ -32,6 +32,7 @@ public class UserController {
     private PasswordEncoder passwordEncoder;
 
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<List<User>> getUsers(){
         return ResponseEntity.ok().body(userService.getUsers());
