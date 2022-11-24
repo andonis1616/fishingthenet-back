@@ -7,6 +7,6 @@ import javax.validation.constraints.NotNull;
 
 @Data
 public class LoginDto {
-    private String usernameOrEmail;
+    private String username;
     private String password;
 }
