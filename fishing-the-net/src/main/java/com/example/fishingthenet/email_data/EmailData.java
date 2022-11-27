@@ -23,6 +23,7 @@ public class EmailData {
     private String subject;
     private String sender;
     private String content;
+    private Boolean isFishing;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")

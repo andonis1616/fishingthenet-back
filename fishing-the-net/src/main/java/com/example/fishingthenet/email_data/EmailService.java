@@ -1,14 +1,12 @@
 package com.example.fishingthenet.email_data;
 
 import com.example.fishingthenet.user.User;
-import com.example.fishingthenet.utils.UnauthorizedException;
+import com.example.fishingthenet.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import javax.validation.constraints.Email;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -16,13 +14,16 @@ public class EmailService {
 
     private final EmailRepository repository;
 
-    public EmailService(EmailRepository repository) {
+    private final UserRepository userRepository;
+    public EmailService(EmailRepository repository, UserRepository userRepository) {
         this.repository = repository;
+        this.userRepository = userRepository;
     }
 
-    List<EmailData> findAllByOwner(){
-        Long ownerId = getUser().getId();
-       List<EmailData> list = repository.findAllByOwner(ownerId);
+    List<EmailData> findAllByOwner(String username){
+
+        User owner = userRepository.findByUsername(username).orElseThrow();
+       List<EmailData> list = repository.findAllByOwner(Optional.of(owner));
        return list;
     }
 
@@ -32,26 +33,12 @@ public class EmailService {
         emailData.setContent(dto.getContent());
         emailData.setSender(dto.getSender());
         emailData.setSubject(dto.getSubject());
-        emailData.setOwner(getUser());
+        emailData.setIsFishing(true);
+
+        emailData.setOwner(userRepository.findByUsername(dto.getOwnerUsername()).orElseThrow());
         repository.save(emailData);
 
         return emailData;
-    }
-
-
-    public static User getUser() {
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            throw new UnauthorizedException("User is not authenticated");
-        }
-
-        final Object principal= authentication.getPrincipal();
-
-        if (!(principal instanceof User)) {
-            throw new UnauthorizedException("Invalid user type");
-        }
-
-        return (User) principal;
     }
 
 }

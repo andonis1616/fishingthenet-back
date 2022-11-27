@@ -10,28 +10,31 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/email")
+@RequestMapping("/api/email")
 @RequiredArgsConstructor
 @Slf4j
-//@CrossOrigin(origins = "*")
 public class EmailController {
 
     @Autowired
-    private final EmailService emailService;
+    private EmailService emailService;
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority()")
     @PostMapping(path = "/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<EmailData> createEmail(@RequestBody EmailDataDto dto) {
         log.info("Trying to save emails");
         return ResponseEntity.ok(emailService.saveEmail(dto));
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @GetMapping(path = "/all")
-    public ResponseEntity<List<EmailData>> getEmailsByUSer() {
-        return ResponseEntity.ok(emailService.findAllByOwner());
+    @PreAuthorize("hasAnyAuthority()")
+    @GetMapping(path = "/username/{username}")
+    public ResponseEntity<List<EmailData>> getEmailsByUSer(@PathVariable String username) {
+        return ResponseEntity.ok(emailService.findAllByOwner(username));
     }
+
+
+
 }

@@ -4,7 +4,9 @@ package com.example.fishingthenet.config;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.example.fishingthenet.user.LoginDto;
+import com.example.fishingthenet.utils.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jdk.jshell.execution.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -52,6 +54,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
             Map<String, String> jsonRequest = new ObjectMapper().readValue(inputStreamBytes, Map.class);
 
             String username = jsonRequest.get("username");
+            log.info("Username: " + username);
             String password = jsonRequest.get("password");
 
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
@@ -69,7 +72,11 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         logger.info("User is logging");
         User user = (User)authResult.getPrincipal();
         Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
+
+       // Long authenticatedUserId = Utils.getUser().getId();
+
         String access_Token = JWT.create().withSubject(user.getUsername())
+//                .withSubject(authenticatedUserId.toString())
                 .withExpiresAt(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
                 .withIssuer(request.getRequestURI().toString())
                 .withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
