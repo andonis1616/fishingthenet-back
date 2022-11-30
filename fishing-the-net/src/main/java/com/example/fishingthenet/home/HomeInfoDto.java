@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class HomeInfoDto {
 
-    private float percentage;
+    private int percentage;
     private String mostfrequentCountry;
     private int numberOfFishingEmails;
 }

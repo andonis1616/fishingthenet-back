@@ -3,6 +3,7 @@ package com.example.fishingthenet.email_data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,5 +37,15 @@ public class EmailController {
     }
 
 
+    @PreAuthorize("hasAnyAuthority()")
+    @GetMapping(path = "/fishing/{username}")
+    public ResponseEntity<List<EmailDataDto>> getFishingEmails(@PathVariable String username) {
+        return ResponseEntity.ok(emailService.findAllFishing(username));
+    }
 
+    @PreAuthorize("hasAnyAuthority()")
+    @GetMapping(path = "/graph")
+    public ResponseEntity<EmailChartData> getGraphData(@Param(value = "username") String username,@Param(value = "timeframe") TimeSlot timeframe) {
+        return ResponseEntity.ok(emailService.getGraphData(username, timeframe));
+    }
 }

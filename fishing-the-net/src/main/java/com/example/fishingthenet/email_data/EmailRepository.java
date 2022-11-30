@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface EmailRepository extends JpaRepository<EmailData, Long> {
 
     List<EmailData> findAllByOwner(Optional<User> owner);
+    List<EmailData> findAllByOwnerAndIsFishingTrue(Optional<User> owner);
 }
