@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -28,6 +29,13 @@ public class EmailController {
     public ResponseEntity<EmailData> createEmail(@RequestBody EmailDataDto dto) {
         log.info("Trying to save emails");
         return ResponseEntity.ok(emailService.saveEmail(dto));
+    }
+
+    @PreAuthorize("hasAnyAuthority()")
+    @PostMapping(path = "/create/timestamp", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<EmailData> createEmailWithTimeStamp(@RequestBody EmailDataDto dto, @Param(value = "timestamp") String timestamp) {
+        log.info("Trying to save emails");
+        return ResponseEntity.ok(emailService.saveEmailWithTimestamp(dto, timestamp));
     }
 
     @PreAuthorize("hasAnyAuthority()")

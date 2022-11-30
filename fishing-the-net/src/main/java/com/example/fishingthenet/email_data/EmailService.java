@@ -6,7 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -34,6 +36,20 @@ public class EmailService {
        return list;
     }
 
+    public EmailData saveEmailWithTimestamp(EmailDataDto dto, String timestamp) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        EmailData emailData = new EmailData();
+        emailData.setContent(dto.getContent());
+        emailData.setSender(dto.getSender());
+        emailData.setSubject(dto.getSubject());
+        emailData.setIsFishing(true);
+        emailData.setDateReceived(LocalDateTime.parse(timestamp, formatter));
+
+        emailData.setOwner(userRepository.findByUsername(dto.getOwnerUsername()).orElseThrow());
+        repository.save(emailData);
+
+        return emailData;
+    }
     EmailData saveEmail(EmailDataDto dto){
 
         EmailData emailData = new EmailData();
@@ -164,4 +180,6 @@ public class EmailService {
         return chartData;
 
     }
+
+
 }
