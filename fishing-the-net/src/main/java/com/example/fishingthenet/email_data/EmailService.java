@@ -3,17 +3,13 @@ package com.example.fishingthenet.email_data;
 import com.example.fishingthenet.user.User;
 import com.example.fishingthenet.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoField;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -22,10 +18,11 @@ import java.util.stream.Collectors;
 public class EmailService {
 
     private final EmailRepository repository;
-
+    private final BadDomainRepository badDomainRepository;
     private final UserRepository userRepository;
-    public EmailService(EmailRepository repository, UserRepository userRepository) {
+    public EmailService(EmailRepository repository, BadDomainRepository badDomainRepository, UserRepository userRepository) {
         this.repository = repository;
+        this.badDomainRepository = badDomainRepository;
         this.userRepository = userRepository;
     }
 
@@ -37,6 +34,13 @@ public class EmailService {
     }
 
     public EmailData saveEmailWithTimestamp(EmailDataDto dto, String timestamp) {
+
+
+        String domain = dto.getSender().split("@")[1];
+
+        boolean isBadDomain = checkBadDomain(domain);
+
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         EmailData emailData = new EmailData();
         emailData.setContent(dto.getContent());
@@ -44,6 +48,13 @@ public class EmailService {
         emailData.setSubject(dto.getSubject());
         emailData.setIsFishing(true);
         emailData.setDateReceived(LocalDateTime.parse(timestamp, formatter));
+        if(isBadDomain){
+            emailData.setPercentage(100);
+        }
+        else {
+            int fromAI = 80;
+            emailData.setPercentage(fromAI);
+        }
 
         emailData.setOwner(userRepository.findByUsername(dto.getOwnerUsername()).orElseThrow());
         repository.save(emailData);
@@ -52,6 +63,10 @@ public class EmailService {
     }
     EmailData saveEmail(EmailDataDto dto){
 
+        String domain = dto.getSender().split("@")[1];
+        
+        boolean isBadDomain = checkBadDomain(domain);
+
         EmailData emailData = new EmailData();
         emailData.setContent(dto.getContent());
         emailData.setSender(dto.getSender());
@@ -59,10 +74,22 @@ public class EmailService {
         emailData.setIsFishing(true);
         emailData.setDateReceived(LocalDateTime.now());
 
+        if(isBadDomain){
+            emailData.setPercentage(100);
+        }
+        else {
+            int fromAI = 80;
+            emailData.setPercentage(fromAI);
+        }
         emailData.setOwner(userRepository.findByUsername(dto.getOwnerUsername()).orElseThrow());
         repository.save(emailData);
 
         return emailData;
+    }
+
+    private boolean checkBadDomain(String domain) {
+        boolean exists = badDomainRepository.existsByDomain(domain);
+        return exists;
     }
 
     public List<EmailDataDto> findAllFishing(String username) {
@@ -112,7 +139,7 @@ public class EmailService {
                 chartData.setTimeFrame(TimeSlot.LAST_DAY);
             }
             case LAST_WEEK -> {
-                    LocalDateTime start = LocalDateTime.now().minusWeeks(1);
+                    LocalDateTime start = LocalDateTime.now().minusWeeks(1).minusHours(LocalDateTime.now().getHour());
                     LocalDateTime end = LocalDateTime.now();
                     Predicate<LocalDateTime> isBetween = x -> (x.isAfter(start)) && (x.isBefore(end));
 
@@ -122,7 +149,9 @@ public class EmailService {
                     for (int i =0; i<=7; i++){
                         int dayOfMonth = start.getDayOfMonth();
                         int finalI = i;
+                        log.info("Day of month: " + dayOfMonth + " increment: " + finalI + "Equal to "  );
                         int numberOfEmails = (int) emails.stream().filter(x -> x.getDayOfMonth() == (dayOfMonth + finalI)).count();
+
                         var dataPoint = new ChartData(numberOfEmails, start.plusDays(finalI).withHour(0).withMinute(0).withSecond(0).withNano(0));
 
                         dataList.add(dataPoint);
@@ -176,10 +205,31 @@ public class EmailService {
             }
         }
 
-        chartData.getChartData().sort(Comparator.comparing(ChartData::timestamp));
+        chartData.getChartData().sort(Comparator.comparing(ChartData::getTimestamp));
         return chartData;
 
     }
 
 
+    public String importData() throws FileNotFoundException {
+
+        File file1 = new File("src/main/resources/ALL-phishing-domains.txt");
+        Scanner reader = new Scanner(file1);
+        while (reader.hasNextLine()){
+            String domain = reader.nextLine();
+            BadDomain badDomain = new BadDomain();
+            badDomain.setDomain(domain);
+            badDomainRepository.save(badDomain);
+        }
+        File file2 = new File("src/main/resources/ALL-phishing-links.txt");
+
+        reader = new Scanner(file2);
+        while (reader.hasNextLine()){
+            String domain = reader.nextLine();
+            BadDomain badDomain = new BadDomain();
+            badDomain.setDomain(domain);
+            badDomainRepository.save(badDomain);
+        }
+        return "Succesfully imported data";
+    }
 }

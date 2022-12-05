@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.FileNotFoundException;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,5 +56,11 @@ public class EmailController {
     @GetMapping(path = "/graph")
     public ResponseEntity<EmailChartData> getGraphData(@Param(value = "username") String username,@Param(value = "timeframe") TimeSlot timeframe) {
         return ResponseEntity.ok(emailService.getGraphData(username, timeframe));
+    }
+
+    @PreAuthorize("hasAnyAuthority()")
+    @GetMapping(path = "/import")
+    public ResponseEntity<String> importData() throws FileNotFoundException {
+        return ResponseEntity.ok(emailService.importData());
     }
 }

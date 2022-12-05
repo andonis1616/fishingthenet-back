@@ -27,6 +27,7 @@ public class EmailData {
     private String content;
     private Boolean isFishing;
 
+    private Integer percentage;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private User owner;
