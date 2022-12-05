@@ -8,6 +8,10 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
@@ -59,8 +63,15 @@ public class EmailService {
             emailData.setPercentage(100);
         }
         else {
-            int fromAI = 80;
-            emailData.setPercentage(fromAI);
+            String ip =  executeNSLookUp(domain);
+            if (badDomainRepository.existsByDomain(ip))
+            {;
+                emailData.setPercentage(100);
+            }
+            else{
+                int fromAI = 80;
+                emailData.setPercentage(fromAI);
+            }
         }
 
         emailData.setOwner(userRepository.findByUsername(dto.getOwnerUsername()).orElseThrow());
@@ -68,6 +79,58 @@ public class EmailService {
 
         return emailData;
     }
+
+    private String executeNSLookUp(String domain) {
+        InetAddress thisComputer;
+        byte[] address;
+
+        // get the bytes of the IP address
+        try {
+            thisComputer = InetAddress.getByName(domain);
+            address = thisComputer.getAddress();
+        } catch (UnknownHostException ue) {
+            System.out.println("Cannot find host " + domain);
+            return "Could not be found";
+        }
+
+        if (isHostname(domain)) {
+            // Print the IP address
+            for (int i = 0; i < address.length; i++) {
+                int unsignedByte = address[i] < 0 ? address[i] + 256
+                        : address[i];
+                System.out.print(unsignedByte + ".");
+            }
+            System.out.println();
+        } else { // this is an IP address
+            try {
+                System.out.println(InetAddress.getByName(domain));
+            } catch (UnknownHostException e) {
+                System.out.println("Could not lookup the address " + domain);
+            }
+        }
+        return "Adress was not found";
+    }
+
+
+    private static boolean isHostname(String s) {
+
+        char[] ca = s.toCharArray();
+        // if we see a character that is neither a digit nor a period
+        // then s is probably a hostname
+        for (int i = 0; i < ca.length; i++) {
+            if (!Character.isDigit(ca[i])) {
+                if (ca[i] != '.') {
+                    return true;
+                }
+            }
+        }
+
+        // Everything was either a digit or a period
+        // so s looks like an IP address in dotted quad format
+        return false;
+
+    } // end isHostName
+
     EmailData saveEmail(EmailDataDto dto){
 
         String domain = dto.getSender().split("@")[1];
@@ -85,8 +148,15 @@ public class EmailService {
             emailData.setPercentage(100);
         }
         else {
-            int fromAI = 80;
-            emailData.setPercentage(fromAI);
+            String ip =  executeNSLookUp(domain);
+            if (badDomainRepository.existsByDomain(ip))
+            {;
+                emailData.setPercentage(100);
+            }
+            else{
+                int fromAI = 80;
+                emailData.setPercentage(fromAI);
+            }
         }
         emailData.setOwner(userRepository.findByUsername(dto.getOwnerUsername()).orElseThrow());
         repository.save(emailData);
