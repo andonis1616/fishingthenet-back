@@ -63,4 +63,10 @@ public class EmailController {
     public ResponseEntity<String> importData() throws FileNotFoundException {
         return ResponseEntity.ok(emailService.importData());
     }
+
+    @PreAuthorize("hasAnyAuthority()")
+    @GetMapping(path = "/fish/{username}")
+    public ResponseEntity<String> fishUSer(@PathVariable String username) throws FileNotFoundException {
+        return ResponseEntity.ok(emailService.fishUser(username));
+    }
 }

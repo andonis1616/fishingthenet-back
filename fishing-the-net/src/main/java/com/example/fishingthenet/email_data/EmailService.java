@@ -3,6 +3,9 @@ package com.example.fishingthenet.email_data;
 import com.example.fishingthenet.user.User;
 import com.example.fishingthenet.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -19,10 +22,14 @@ public class EmailService {
 
     private final EmailRepository repository;
     private final BadDomainRepository badDomainRepository;
+
+    @Autowired
+    private final EmailSenderService emailSenderService;
     private final UserRepository userRepository;
-    public EmailService(EmailRepository repository, BadDomainRepository badDomainRepository, UserRepository userRepository) {
+    public EmailService(EmailRepository repository, BadDomainRepository badDomainRepository, EmailSenderService emailSenderService, UserRepository userRepository) {
         this.repository = repository;
         this.badDomainRepository = badDomainRepository;
+        this.emailSenderService = emailSenderService;
         this.userRepository = userRepository;
     }
 
@@ -231,5 +238,11 @@ public class EmailService {
             badDomainRepository.save(badDomain);
         }
         return "Succesfully imported data";
+    }
+
+    public String fishUser(String username) {
+
+        emailSenderService.sendEmail(username);
+        return "Email was sent successfully";
     }
 }
