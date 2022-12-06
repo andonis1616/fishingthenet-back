@@ -1,6 +1,7 @@
 package com.example.fishingthenet.user;
 
 import com.example.fishingthenet.config.CustomAuthorizationFilter;
+import com.example.fishingthenet.utils.UnauthorizedException;
 import com.nimbusds.oauth2.sdk.util.singleuse.AlreadyUsedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -27,6 +30,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -75,6 +81,41 @@ public class UserController {
 
         return ResponseEntity.ok(dto);
 
+    }
+
+    @PreAuthorize("hasAnyAuthority()")
+    @PutMapping("/edit")
+    public ResponseEntity<?> editUser(@RequestBody UpdateDto updateDto) throws AlreadyUsedException {
+
+        // create user object
+        if (userRepository.existsByEmail(updateDto.getNewEmail())) {
+            return ResponseEntity.badRequest().body("Email taken");
+        }
+
+        if (userRepository.existsByUsername(updateDto.getNewUsername())){
+            return ResponseEntity.badRequest().body("Username is already taken");
+        }
+
+        User user = userRepository.findByUsername(updateDto.getOldUsername()).orElseThrow();
+        user.setName(   !Objects.isNull(updateDto.getNewName()) ? updateDto.getNewName() : user.getName());
+
+        user.setUsername( !Objects.isNull(updateDto.getNewUsername()) ? updateDto.getNewUsername() : user.getUsername() );
+
+        user.setEmail( !Objects.isNull(updateDto.getNewEmail()) ? updateDto.getNewEmail() : user.getEmail());
+        String password = !Objects.isNull(updateDto.getNewPassword()) ? updateDto.getNewPassword() : null;
+        if (password != null) {
+            user.setPassword(passwordEncoder.encode(password));
+        }
+        User return_user = userRepository.save(user);
+
+        UserDto dto = new UserDto();
+        dto.setName(return_user.getName());
+        dto.setEmail(return_user.getEmail());
+        dto.setId(return_user.getId());
+        dto.setUsername(return_user.getUsername());
+        dto.setRoles(return_user.getRoles());
+
+        return ResponseEntity.ok(dto);
     }
 
 
