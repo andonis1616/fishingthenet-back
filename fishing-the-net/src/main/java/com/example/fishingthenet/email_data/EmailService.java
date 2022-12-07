@@ -4,14 +4,17 @@ import com.example.fishingthenet.user.User;
 import com.example.fishingthenet.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
 
-import java.io.DataInputStream;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
@@ -44,13 +47,13 @@ public class EmailService {
        return list;
     }
 
-    public EmailData saveEmailWithTimestamp(EmailDataDto dto, String timestamp) {
-
+    public EmailData saveEmailWithTimestamp(EmailDataDto dto, String timestamp) throws IOException, URISyntaxException {
 
         String domain = dto.getSender().split("@")[1];
 
         boolean isBadDomain = checkBadDomain(domain);
 
+        var analyzed = analyzedEmail(dto);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         EmailData emailData = new EmailData();
@@ -65,12 +68,23 @@ public class EmailService {
         else {
             String ip =  executeNSLookUp(domain);
             if (badDomainRepository.existsByDomain(ip))
-            {;
+            {
                 emailData.setPercentage(100);
             }
             else{
-                int fromAI = 80;
-                emailData.setPercentage(fromAI);
+                if (analyzed != null) {
+                    int fromAI = Math.round(analyzed.getProcentage() * 100);
+                    if (analyzed.getIsPhishing().equals("Phishing")){
+                        emailData.setIsFishing(true);
+                    }
+                    else {
+                        emailData.setIsFishing(false);
+                    }
+                    emailData.setPercentage(fromAI);
+                }
+                else{
+                    emailData.setPercentage(0);
+                }
             }
         }
 
@@ -131,10 +145,13 @@ public class EmailService {
 
     } // end isHostName
 
-    EmailData saveEmail(EmailDataDto dto){
+    EmailData saveEmail(EmailDataDto dto) throws IOException, URISyntaxException {
 
         String domain = dto.getSender().split("@")[1];
-        
+
+        //Float obj = null;
+        AnalyzedEmailDto analyzed = analyzedEmail(dto);
+
         boolean isBadDomain = checkBadDomain(domain);
 
         EmailData emailData = new EmailData();
@@ -154,14 +171,35 @@ public class EmailService {
                 emailData.setPercentage(100);
             }
             else{
-                int fromAI = 80;
-                emailData.setPercentage(fromAI);
+                if (analyzed != null) {
+                    int fromAI = Math.round(analyzed.getProcentage() * 100);
+                    if (analyzed.getIsPhishing().equals("Phishing")){
+                        emailData.setIsFishing(true);
+                    }
+                    else {
+                        emailData.setIsFishing(false);
+                    }
+                    emailData.setPercentage(fromAI);
+                }
+                else{
+                    emailData.setPercentage(0);
+                }
             }
         }
         emailData.setOwner(userRepository.findByUsername(dto.getOwnerUsername()).orElseThrow());
         repository.save(emailData);
 
         return emailData;
+    }
+
+    private AnalyzedEmailDto analyzedEmail(EmailDataDto dto) throws URISyntaxException {
+
+        RestTemplate restTemplate = new RestTemplate();
+        URI uri = new URI("http://localhost:8000/body");
+
+        ResponseEntity<AnalyzedEmailDto> response = restTemplate.postForEntity(uri, dto, AnalyzedEmailDto.class);
+
+        return response.getBody();
     }
 
     private boolean checkBadDomain(String domain) {
