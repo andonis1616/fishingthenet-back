@@ -49,7 +49,13 @@ public class EmailService {
 
     public EmailData saveEmailWithTimestamp(EmailDataDto dto, String timestamp) throws IOException, URISyntaxException {
 
-        String domain = dto.getSender().split("@")[1];
+        String domain = "";
+        if(dto.getSender() == null || dto.getSender().equals("")){
+            domain = "";
+        }
+        else{
+            domain = dto.getSender().split("@")[1];
+        }
 
         boolean isBadDomain = checkBadDomain(domain);
 
@@ -147,7 +153,13 @@ public class EmailService {
 
     EmailData saveEmail(EmailDataDto dto) throws IOException, URISyntaxException {
 
-        String domain = dto.getSender().split("@")[1];
+        String domain = "";
+        if(dto.getSender() == null || dto.getSender().equals("")){
+             domain = "";
+        }
+        else{
+             domain = dto.getSender().split("@")[1];
+        }
 
         //Float obj = null;
         AnalyzedEmailDto analyzed = analyzedEmail(dto);
