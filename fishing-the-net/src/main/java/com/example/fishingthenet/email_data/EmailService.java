@@ -153,6 +153,10 @@ public class EmailService {
 
     EmailData saveEmail(EmailDataDto dto) throws IOException, URISyntaxException {
 
+        User user = userRepository.findByUsername(dto.getOwnerUsername()).orElseThrow();
+        if (repository.existsByOwnerAndSubject(user, dto.getSubject())){
+            return repository.findByOwnerAndSubject(user, dto.getSubject()).get(0);
+        }
         String domain = "";
         if(dto.getSender() == null || dto.getSender().equals("")){
              domain = "";

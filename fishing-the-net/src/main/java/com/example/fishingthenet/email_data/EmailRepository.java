@@ -12,4 +12,8 @@ public interface EmailRepository extends JpaRepository<EmailData, Long> {
 
     List<EmailData> findAllByOwner(Optional<User> owner);
     List<EmailData> findAllByOwnerAndIsFishingTrue(Optional<User> owner);
+
+    Boolean existsByOwnerAndSubject(User owner, String Subject);
+
+    List<EmailData> findByOwnerAndSubject(User owner, String Subject);
 }
